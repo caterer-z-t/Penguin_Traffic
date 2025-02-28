@@ -1,0 +1,197 @@
+Here’s a breakdown of the code line by line:
+
+Importing necessary libraries
+
+import numpy as np: Imports the NumPy library as np, which is used for numerical operations (such as generating random numbers).
+import matplotlib.pyplot as plt: Imports the pyplot module from Matplotlib, which is used for creating plots and visualizations.
+import matplotlib.animation as animation: Imports the animation module from Matplotlib to animate the simulation.
+from mesa import Agent, Model: Imports the base Agent and Model classes from the Mesa library, which are the foundational classes for agent-based modeling.
+from mesa.space import MultiGrid: Imports the MultiGrid class from the Mesa library, which is used to create a grid where agents (cars in this case) can move and interact.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Defining the Car Agent class
+
+class Car(Agent):
+    def __init__(self, unique_id, model, direction):
+        super(Car, self).__init__(model=model)  # 🚀 Explicitly pass `model`
+        self.unique_id = unique_id  # 🚀 Ensure ID is explicitly stored
+        self.direction = direction  # "N", "S", "E", "W"
+        self.speed = 1  # Cells per step
+
+class Car(Agent):: Defines a new Car class that inherits from the Mesa Agent class. This class will represent individual cars in the simulation.
+
+def __init__(self, unique_id, model, direction):: The constructor (__init__ method) initializes the agent with a unique ID, the model it's part of, and its direction of movement.
+
+super(Car, self).__init__(model=model): Calls the parent class (Agent) constructor, passing the model argument. This is necessary to correctly initialize the agent within the model.
+
+self.unique_id = unique_id: Stores the unique ID of the agent.
+
+self.direction = direction: Stores the direction the car will move in (e.g., "N" for North, "S" for South, "E" for East, "W" for West).
+
+self.speed = 1: Sets the speed of the car to 1 cell per step.
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+Defining the movement behavior of the Car
+
+    def move(self):
+        possible_moves = self.get_possible_moves()
+        if possible_moves:
+            self.model.grid.move_agent(self, possible_moves[0])  # Move forward if possible
+
+def move(self):: Defines the move method that determines how the car moves on the grid.
+
+possible_moves = self.get_possible_moves(): Calls the get_possible_moves method to find out where the car can move.
+
+if possible_moves:: If there are any valid moves, the car will proceed.
+
+self.model.grid.move_agent(self, possible_moves[0]): Moves the car to the first valid position in possible_moves (if available).
+
+------------------------------------------------------------------------------------------------------------------------------------
+Defining the logic for possible moves
+    def get_possible_moves(self):
+        x, y = self.pos
+        moves = {
+            "N": (x, y + self.speed),
+            "S": (x, y - self.speed),
+            "E": (x + self.speed, y),
+            "W": (x - self.speed, y),
+        }
+        new_pos = moves[self.direction]
+        if self.model.grid.out_of_bounds(new_pos):
+            return []
+        return [new_pos] if self.model.grid.is_cell_empty(new_pos) else []
+
+def get_possible_moves(self):: Defines the logic for possible moves based on the car's direction.
+
+x, y = self.pos: Gets the current position of the car (self.pos).
+
+moves = { ... }: A dictionary defining possible moves in the four cardinal directions (North, South, East, West) based on the car's speed.
+
+new_pos = moves[self.direction]: Determines the car’s new position based on its direction.
+
+if self.model.grid.out_of_bounds(new_pos):: Checks if the new position is out of bounds on the grid. If so, returns an empty list of possible moves.
+
+return [new_pos] if self.model.grid.is_cell_empty(new_pos) else []: Returns the new position if the cell is empty; otherwise, no valid move is possible.
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+Defining the agent's step behavior
+
+    def step(self):
+        self.move()
+
+def step(self):: Defines the step method, which is called to update the agent's state at each time step in the simulation.
+
+self.move(): Calls the move method to make the car move on the grid.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Defining the TrafficModel class
+
+class TrafficModel(Model):
+    def __init__(self, width=10, height=10, num_cars=10):
+        super().__init__()
+        self.grid = MultiGrid(width, height, torus=False)
+        self.car_agents = []  # 🚀 Store agents in `self.car_agents`
+
+class TrafficModel(Model):: Defines a new TrafficModel class that inherits from the Model class in Mesa. This class represents the overall traffic simulation.
+
+def __init__(self, width=10, height=10, num_cars=10):: The constructor initializes the simulation with a grid of specified size (width and height) and a set number of cars (num_cars).
+
+super().__init__(): Calls the parent class (Model) constructor to initialize the model.
+
+self.grid = MultiGrid(width, height, torus=False): Initializes the grid where agents will move. MultiGrid allows multiple agents to occupy the same cell.
+
+self.car_agents = []: Initializes an empty list to store the car agents.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Creating and placing the car agents
+        for i in range(num_cars):
+            direction = np.random.choice(["N", "S", "E", "W"])
+            x, y = np.random.randint(0, width), np.random.randint(0, height)
+            car = Car(unique_id=i, model=self, direction=direction)  # 🚀 Pass `model=self`
+            self.grid.place_agent(car, (x, y))
+            self.car_agents.append(car)  # 🚀 Use `self.car_agents`
+
+for i in range(num_cars):: Loop to create and place the specified number of cars on the grid.
+
+direction = np.random.choice(["N", "S", "E", "W"]): Randomly selects a direction for each car (North, South, East, West).
+
+x, y = np.random.randint(0, width), np.random.randint(0, height): Randomly selects a position on the grid for each car.
+
+car = Car(unique_id=i, model=self, direction=direction): Creates a new car agent, passing the unique_id, the model (which is the current TrafficModel), and the car’s direction.
+
+self.grid.place_agent(car, (x, y)): Places the car agent on the grid at the randomly selected position (x, y).
+
+self.car_agents.append(car): Adds the created car to the car_agents list.
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+Running the model for each time step
+    def step(self):
+        for agent in self.car_agents:
+            agent.step()
+
+def step(self):: Defines the step method for the model, which is called at each time step in the simulation.
+
+for agent in self.car_agents:: Loops through each car in the car_agents list.
+
+agent.step(): Calls the step method of each car agent to update their state (move).
+
+------------------------------------------------------------------------------------------------------------------------------------
+Visualizing the simulation
+
+def run_simulation(steps=20):
+    model = TrafficModel(width=10, height=10, num_cars=10)
+    fig, ax = plt.subplots()
+
+def run_simulation(steps=20):: Defines a function to run the simulation for a given number of steps (steps).
+
+model = TrafficModel(width=10, height=10, num_cars=10): Creates a new instance of the TrafficModel with a 10x10 grid and 10 cars.
+
+fig, ax = plt.subplots(): Creates a figure and axes for visualizing the grid using Matplotlib.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Updating the grid for each frame
+    def update(frame):
+        model.step()
+        ax.clear()
+        grid_data = np.zeros((10, 10))
+        for agent in model.car_agents:
+            x, y = agent.pos
+            grid_data[y, x] = 1
+        ax.imshow(grid_data, cmap="Greys")
+        ax.set_title(f"Step {frame}")
+
+def update(frame):: Defines a function to update the grid visualization for each time step in the simulation.
+
+model.step(): Advances the simulation by one time step (moves all cars).
+
+ax.clear(): Clears the previous frame's image from the plot.
+
+grid_data = np.zeros((10, 10)): Creates a 10x10 grid with zeros (no cars).
+
+for agent in model.car_agents:: Loops through each car agent.
+
+x, y = agent.pos: Gets the current position of the car.
+
+grid_data[y, x] = 1: Sets the cell where the car is located to 1.
+
+ax.imshow(grid_data, cmap="Greys"): Displays the updated grid, where 1 represents a car, and 0 represents an empty cell.
+
+ax.set_title(f"Step {frame}"): Sets the title of the plot to show the current step.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Running the animation
+    ani = animation.FuncAnimation(fig, update, frames=steps, repeat=False)
+    plt.show()
+
+ani = animation.FuncAnimation(fig, update, frames=steps, repeat=False): Creates an animation by calling the update function for each frame of the simulation, where steps is the total number of frames.
+
+plt.show(): Displays the animation.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Starting the simulation
+
+run_simulation()
+run_simulation(): Starts the simulation and visualization.
