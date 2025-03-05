@@ -1,0 +1,94 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+
+\begin{center}    
+    \textbf{\Large 
+    Bio-Inspired Traffic Flow: Using Penguin Huddle Models to Optimize Traffic Jam Dynamics
+    }\\
+    
+    \vspace{0.5cm}
+
+    Ana Costa$^1$, Zachary Caterer$^1$\\
+    
+    \vspace{0.5cm}
+    
+    $^1$Department of Chemical and Biological Engineering, University of Colorado Boulder\\
+\end{center}
+
+
+\section*{Introduction}
+    Traffic congestion at uncontrolled intersections presents a challenge in urban planning. Aside from leading to energy innefficiencies, traffic congestion
+increases emissions and driver fatigue. In recent years, adaptive cruise control (ACC) has enhaced the driving experience by relying on vehicles' automated
+systems to perform simpler tasks such as maintaining speed and automatically breaking when necessary, without the need of driver input. Automated traffic congestion decision-making could
+potentially be implemented into cruise control by adapting the collective decision making model of penguin huddles. Emperor penguins collectively huddle to optimize warmth and minimize exposure, while
+simulataneously avoiding collisions to maintain a net benefit. The number of penguins that participate in huddles can reach the hundreds, which highlights
+the effectiveness of the huddle behavior in individual decision-making for collective movement (Zitterbart et al.). This project aims to levarage the dynamics of penguin huddles to optimize traffic flow at uncontrolled intersections,
+where congestion is prominent, by treating cars as agents that self-organize dynamically. 
+
+\section*{Background and Related Work}
+    The movement of emperor penguins in a huddle follows rules that balance individual needs with group dynamics. Individuals make decisions based on signals from their local
+environment in order to maintain the required proximity for collective thermal regulation. Similarly, vehicles at an unsignalized intersection make local decisions to avoid 
+collisions and minimize wait times. Prior research in agent-based modeling (ABM) and cellular automata (CA) has shown promise in simulating traffic flow under decentralized decision-making (Schäfer, Rico, et al).
+
+\section*{Project Plan and Milestones}
+We propose that implementing penguin-huddle dynamics into an ACC system will optimize the efficiency of vehicle movement in congested traffic scenarios.
+ To develop a robust model, we will
+
+\begin{itemize}
+    \item Week 1-2: Review literature on penguin huddle dynamics and agent-based traffic models.
+    \item Week 2-3: Formulate a mathematical model using partial differential equations (PDEs) and cellular automata.
+    \item Week 3-4: Implement the model in Python using Mesa (for ABM), NumPy/SciPy (for PDEs), and Matplotlib (for visualization).
+    \item Week 4-5: Simulate and analyze traffic efficiency with and without the huddle-inspired ACC system.
+    \item Week 5-6: Finalize report and visualization of findings.
+\end{itemize}
+
+\section*{Mathematical and Computational Approach}
+
+\subsection*{Agent-Based Modeling}
+    Each car is treated as an agent with local decision-making. Rules for yielding, advancing, and stopping will be defined based on distance to other vehicles, similar to penguin huddle movement.
+Once an agent reaches a certain distance from another at slow enough speeds, the ACC mode will be activated, and the agent will follow the huddle-inspired rules.
+
+\subsection*{Partial Differential Equations and Cellular Automata}
+We will explore:
+\begin{itemize}
+    \item PDE models adapted from heat transfer equations used in penguin huddling.
+    \item Discrete cellular automata models where each cell represents a section of the intersection.
+\end{itemize}
+
+\section*{Computational Implementation}
+\textbf{Programming Language:} Python or Julia 
+
+\vspace{0.25cm}
+\textbf{Libraries:}
+\begin{itemize}
+    \item Mesa for agent-based modeling
+    \item NumPy/SciPy for PDE-based simulations
+    \item Matplotlib for visualization
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Heatmaps of traffic density
+    \item Time evolution of queue lengths
+    \item Comparisons with traditional traffic control methods
+\end{itemize}
+
+\section*{Impact and Conclusion}
+This project aims to demonstrate whether bio-inspired self-organization can improve uncontrolled intersection efficiency in congested traffic scenarios. 
+Understanding these dynamics could provide insights for urban planning and autonomous vehicle navigation in decentralized traffic systems.
+
+\section*{Bibliography}
+\begin{itemize}
+    \item Zitterbart, Daniel P., et al. "Coordinated Movements Prevent Jamming in an Emperor Penguin Huddle." PLOS ONE, vol. 6, no. 6, 2011, e20260. \newline Public Library of Science, https://doi.org/10.1371/journal.pone.0020260.
+    \item Schäfer, Rico, et al. "An Overview of Agent-Based Traffic Simulators." arXiv, 15 Feb. 2021, \newline ar5iv.labs.arxiv.org/html/2102.07505.
+    \item Schadschhneider, A., et al. ``Traffic and Granular Flow." Springer, 2013.
+    \item Moussaid, M., et al. ``How simple rules determine pedestrian behavior and crowd disasters." Proceedings of the National Academy of Sciences, 2011.
+    \item Helbing, D. ``Traffic and Related Self-Driven Many-Particle Systems." Reviews of Modern Physics, 2001.
+    \item Gu, F., et al. ``Emergence of collective oscillations in massive human crowds." Nature, 2025. 
+\end{itemize}
+
+
+\end{document}
