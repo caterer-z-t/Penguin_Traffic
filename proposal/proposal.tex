@@ -1,0 +1,81 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=1in]{geometry}
+
+\begin{document}
+
+\begin{center}    
+    \textbf{\Large 
+    Bio-Inspired Traffic Flow: Using Penguin Huddle Models to Optimize Uncontrolled Intersection Dynamics
+    }\\
+    
+    \vspace{0.5cm}
+
+    Ana Costa$^1$, Zachary Caterer$^1$\\
+    
+    \vspace{0.5cm}
+    
+    $^1$Department of Chemical and Biological Engineering, University of Colorado Boulder\\
+\end{center}
+
+
+\section*{Introduction}
+Traffic congestion at uncontrolled intersections presents a challenge in urban planning. This project explores how the mathematical model of penguin huddling—where individuals move to optimize warmth and minimize exposure—can be adapted to model car traffic at intersections without traffic signals. By treating cars as agents that self-organize dynamically, we aim to identify emergent patterns that optimize traffic flow.
+
+\section*{Background and Related Work}
+The movement of emperor penguins in a huddle follows rules that balance individual needs with group dynamics. Similarly, vehicles at an unsignalized intersection make local decisions to avoid collisions and minimize wait times. Prior research in agent-based modeling (ABM) and cellular automata (CA) has shown promise in simulating traffic flow under decentralized decision-making.
+
+\section*{Project Plan and Milestones}
+To develop a robust model, we will
+
+\begin{itemize}
+    \item Week 1-2: Review literature on penguin huddle dynamics and agent-based traffic models.
+    \item Week 3-4: Formulate a mathematical model using partial differential equations (PDEs) and cellular automata.
+    \item Week 5-6: Implement the model in Python using Mesa (for ABM), NumPy/SciPy (for PDEs), and Matplotlib (for visualization).
+    \item Week 7-8: Simulate and analyze traffic efficiency under different conditions.
+    \item Week 9: Compare results against conventional traffic control methods (e.g., roundabouts, stop signs).
+    \item Week 10: Finalize report and visualization of findings.
+\end{itemize}
+
+\section*{Mathematical and Computational Approach}
+
+\subsection*{Agent-Based Modeling}
+Each car is treated as an agent with local decision-making. Rules for yielding, advancing, and stopping will be defined based on distance to other vehicles, similar to penguin huddle movement.
+
+\subsection*{Partial Differential Equations and Cellular Automata}
+We will explore:
+\begin{itemize}
+    \item PDE models adapted from heat transfer equations used in penguin huddling.
+    \item Discrete cellular automata models where each cell represents a section of the intersection.
+\end{itemize}
+
+\section*{Computational Implementation}
+\textbf{Programming Language:} Python or Julia
+
+\textbf{Libraries:}
+\begin{itemize}
+    \item Mesa for agent-based modeling
+    \item NumPy/SciPy for PDE-based simulations
+    \item Matplotlib for visualization
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Heatmaps of traffic density
+    \item Time evolution of queue lengths
+    \item Comparisons with traditional traffic control methods
+\end{itemize}
+
+\section*{Impact and Conclusion}
+This project aims to demonstrate whether bio-inspired self-organization can improve uncontrolled intersection efficiency. Understanding these dynamics could provide insights for urban planning and autonomous vehicle navigation in decentralized traffic systems.
+
+\section*{Bibliography}
+\begin{itemize}
+    \item Schadschhneider, A., et al. ``Traffic and Granular Flow." Springer, 2013.
+    \item Moussaid, M., et al. ``How simple rules determine pedestrian behavior and crowd disasters." Proceedings of the National Academy of Sciences, 2011.
+    \item Helbing, D. ``Traffic and Related Self-Driven Many-Particle Systems." Reviews of Modern Physics, 2001.
+    \item Gu, F., et al. ``Emergence of collective oscillations in massive human crowds." Nature, 2025. 
+\end{itemize}
+
+
+\end{document}

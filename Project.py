@@ -1,71 +1,120 @@
+
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from mesa import Agent, Model
-from mesa.space import MultiGrid
+import random
 
-class Car(Agent):
-    def __init__(self, unique_id, model, direction):
-        super(Car, self).__init__(model=model)  # 🚀 Explicitly pass `model`
-        self.unique_id = unique_id  # 🚀 Ensure ID is explicitly stored
-        self.direction = direction  # "N", "S", "E", "W"
-        self.speed = 1  # Cells per step
 
-    def move(self):
-        possible_moves = self.get_possible_moves()
-        if possible_moves:
-            self.model.grid.move_agent(self, possible_moves[0])  # Move forward if possible
+class Car:
+    def __init__(self, lane, position, speed, direction=1, max_speed=5):
+        """
+        Initialize a car with specific properties
 
-    def get_possible_moves(self):
-        x, y = self.pos
-        moves = {
-            "N": (x, y + self.speed),
-            "S": (x, y - self.speed),
-            "E": (x + self.speed, y),
-            "W": (x - self.speed, y),
-        }
-        new_pos = moves[self.direction]
-        if self.model.grid.out_of_bounds(new_pos):
-            return []
-        return [new_pos] if self.model.grid.is_cell_empty(new_pos) else []
+        :param lane: Lane number the car is in
+        :param position: Initial position on the highway
+        :param speed: Speed of the car (units per time step)
+        :param direction: 1 for forward, -1 for backward
+        :param max_speed: Maximum speed the car can travel
+        """
+        self.lane = lane
+        self.position = position
+        self.speed = speed
+        self.direction = direction
+        self.max_speed = max_speed
+        self.color = f"rgb({random.randint(50,200)}, {random.randint(50,200)}, {random.randint(50,200)})"
 
-    def step(self):
-        self.move()
 
-class TrafficModel(Model):
-    def __init__(self, width=10, height=10, num_cars=10):
-        super().__init__()
-        self.grid = MultiGrid(width, height, torus=False)
-        self.car_agents = []  # 🚀 Store agents in `self.car_agents`
+class HighwayTrafficSimulation:
+    def __init__(self, highway_length=100, road_width=6, side_width=2):
+        """
+        Initialize the highway traffic simulation
 
-        for i in range(num_cars):
-            direction = np.random.choice(["N", "S", "E", "W"])
-            x, y = np.random.randint(0, width), np.random.randint(0, height)
-            car = Car(unique_id=i, model=self, direction=direction)  # 🚀 Pass `model=self`
-            self.grid.place_agent(car, (x, y))
-            self.car_agents.append(car)  # 🚀 Use `self.car_agents`
+        :param highway_length: Total length of the highway
+        :param road_width: Number of lanes
+        :param side_width: Width of the road sides
+        """
+        self.highway_length = highway_length
+        self.road_width = road_width
+        self.side_width = side_width
+        self.cars = []
 
-    def step(self):
-        for agent in self.car_agents:
-            agent.step()
+    def generate_cars(self, num_cars):
+        """
+        Generate a specified number of cars with random properties
 
-# Run the simulation and visualize
-def run_simulation(steps=20):
-    model = TrafficModel(width=10, height=10, num_cars=10)
-    fig, ax = plt.subplots()
-    
-    def update(frame):
-        model.step()
-        ax.clear()
-        grid_data = np.zeros((10, 10))
-        for agent in model.car_agents:
-            x, y = agent.pos
-            grid_data[y, x] = 1
-        ax.imshow(grid_data, cmap="Greys")
-        ax.set_title(f"Step {frame}")
-    
-    ani = animation.FuncAnimation(fig, update, frames=steps, repeat=False)
-    plt.show()
+        :param num_cars: Number of cars to generate
+        """
+        self.cars = []
+        for _ in range(num_cars):
+            lane = random.randint(1, self.road_width)
+            position = random.randint(0, self.highway_length)
+            speed = random.randint(1, 5)
+            direction = random.choice([1, 1])
+            self.cars.append(Car(lane, position, speed, direction))
 
-# Run the fully fixed simulation
-run_simulation()
+    def update_car_positions(self, time_step):
+        """
+        Update positions of all cars based on their speed and traffic conditions
+
+        :param time_step: Number of time steps elapsed
+        :return: Updated car positions
+        """
+        # Sort cars by lane and position to check for cars ahead
+        lane_cars = {}
+        for car in self.cars:
+            if car.lane not in lane_cars:
+                lane_cars[car.lane] = []
+            lane_cars[car.lane].append(car)
+
+        # Sort cars in each lane by position
+        for lane in lane_cars:
+            lane_cars[lane].sort(key=lambda x: x.position)
+
+        updated_cars = []
+        for car in self.cars:
+            # Find cars in the same lane
+            cars_in_lane = lane_cars.get(car.lane, [])
+
+            # Find the car directly in front (if any)
+            car_ahead = None
+            for other_car in cars_in_lane:
+                # Skip the current car itself
+                if other_car == car:
+                    continue
+
+                # Check if the other car is ahead of the current car
+                # Account for wraparound in highway length
+                if car.direction == 1:
+                    if (
+                        other_car.position > car.position
+                        and other_car.position - car.position < self.highway_length / 2
+                    ):
+                        car_ahead = other_car
+                        break
+                else:
+                    if (
+                        other_car.position < car.position
+                        and car.position - other_car.position < self.highway_length / 2
+                    ):
+                        car_ahead = other_car
+                        break
+
+            # Adjust speed based on car ahead
+            if car_ahead:
+                # If car ahead is moving slower, match its speed
+                car.speed = min(car.speed, car_ahead.speed)
+            else:
+                # If no car ahead, gradually return to max speed
+                car.speed = min(car.speed + 0.5, car.max_speed)
+
+            # Update position
+            new_position = (
+                car.position + car.speed * car.direction * time_step
+            ) % self.highway_length
+
+            # Create updated car
+            updated_car = Car(
+                car.lane, new_position, car.speed, car.direction, car.max_speed
+            )
+            updated_car.color = car.color  # Preserve original color
+            updated_cars.append(updated_car)
+
+        return updated_cars
