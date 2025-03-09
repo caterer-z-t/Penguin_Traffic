@@ -85,6 +85,7 @@ class HighwayTrafficSimulation:
 
     def _sort_cars_in_lane(self, lane_value):
         """Sorts cars in each lane by position."""
+        
         lanes = {i: [] for i in range(1, lane_value + 1)}
         for car in self.cars:
             lanes[car.lane].append(car)
@@ -132,7 +133,7 @@ class HighwayTrafficSimulation:
         """Updates the entire simulation for one time step."""
         # Organize cars by lane
         lanes = self._sort_cars_in_lane(lane_value=lane_value)
-        print(lanes)
+        
         for lane in lanes:
             if len(lanes[lane]) > 1:
                 for i in range(len(lanes[lane]) - 1):  # Loop through all consecutive cars
@@ -170,22 +171,7 @@ class HighwayTrafficSimulation:
         # Organize cars by lane
         lanes = self._sort_cars_in_lane()
 
-        # implement code to allow cars to act individually
-        for lane in lanes:
-            for i in range(len(lanes[lane])):
-                car = lanes[lane][i]
-                car_in_front = None
-                distance_to_car_in_front = None
 
-                if i < len(lanes[lane]) - 1:
-                    car_in_front = lanes[lane][i + 1]
-                    distance_to_car_in_front = car_in_front.position - car.position
-
-                car.adjust_speed(distance_to_car_in_front, car_in_front.speed)
-
-        for lane in lanes:
-            for car in lanes[lane]:
-                car.position += car.speed
 
         
         return self._apres_simulation(spawn_rate, lane_value)
