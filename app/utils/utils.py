@@ -1,0 +1,110 @@
+# In[1]: Imports
+import dash
+import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
+from dash.dependencies import Input, Output, State
+import os
+import sys
+
+# Set the working directory to the directory of this file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(current_dir)
+sys.path.append(current_dir)
+
+from app.utils.highway_traffic_and_car_sim import HIGHWAY_LENGTH
+
+# In[2]: Define functions
+def create_figure(lane_slider_value, traffic_sim):
+    # Road background (gray area)
+    road_background = go.Scatter(
+        x=[0, HIGHWAY_LENGTH, HIGHWAY_LENGTH, 0, 0],
+        y=[-0.5, -0.5, lane_slider_value - 0.5, lane_slider_value - 0.5, -0.5],
+        fill="toself",
+        fillcolor="lightgray",
+        line=dict(width=0),
+        mode="lines",
+        hoverinfo="none",
+    )
+
+    # Lane markers (dashed white lines)
+    lane_lines = [
+        go.Scatter(
+            x=[i for i in range(0, HIGHWAY_LENGTH, 5)],
+            y=[lane + 0.5] * (HIGHWAY_LENGTH // 5),
+            mode="markers",
+            marker=dict(size=2, color="white", symbol="line-ew"),
+            hoverinfo="none",
+        )
+        for lane in range(lane_slider_value - 1)
+    ]
+
+    # Car representations
+    car_data = []
+    for car in traffic_sim.cars:
+        car_data.append(
+            go.Scatter(
+                x=[car.position],
+                y=[car.lane - 1],  # Centering cars in lanes
+                mode="markers",
+                marker=dict(size=15, color=car.color, symbol="circle", opacity=0.9),
+                hovertext=f"Lane: {car.lane}, Speed: {car.speed:.1f}, Type: {car.driver_type}",
+                hoverinfo="text",
+            )
+        )
+
+    # Create the figure
+    fig = {
+        "data": [road_background] + lane_lines + car_data,
+        "layout": go.Layout(
+            title="Highway Traffic Simulation",
+            xaxis=dict(
+                range=[0, HIGHWAY_LENGTH], title="Highway Position", showgrid=False
+            ),
+            yaxis=dict(
+                range=[-1, lane_slider_value],
+                title="Lanes",
+                tickvals=[i for i in range(lane_slider_value)],
+                ticktext=[f"Lane {i+1}" for i in range(lane_slider_value)],
+                showgrid=False,
+                tickangle=-45,  # Rotate y-axis text 45 degrees
+            ),
+            showlegend=False,
+            plot_bgcolor="white",
+            margin=dict(l=50, r=50, b=50, t=50),
+            height=500,
+        ),
+    }
+
+    return fig
+
+
+def create_placeholder_figure():
+    fig = go.Figure()
+
+    # Add an image using the local path (served via Dash assets)
+    fig.add_layout_image(
+        dict(
+            source="/assets/mana5280-DAQOskiNFtg-unsplash.jpg",  # Reference to local image
+            x=0.5,
+            y=0.5,  # Center the image
+            xref="paper",
+            yref="paper",
+            sizex=1,
+            sizey=1,
+            xanchor="center",
+            yanchor="middle",
+            layer="below",
+        )
+    )
+
+    # Remove axes and grid
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    fig.update_layout(
+        title="Waiting for Simulation to Start...",
+        showlegend=False,
+        plot_bgcolor="white",
+        margin=dict(l=0, r=0, t=40, b=0)
+    )
+
+    return fig

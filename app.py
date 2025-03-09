@@ -1,5 +1,5 @@
+# In[1]: Imports
 import dash
-from dash import dcc, html
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
@@ -11,141 +11,84 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(current_dir)
 sys.path.append(current_dir)
 
-from Project import HighwayTrafficSimulation
+# Import the HighwayTrafficSimulation class from our local file
+from app.utils.highway_traffic_and_car_sim import HighwayTrafficSimulation, HIGHWAY_LENGTH
+from app.main import layout
+from app.utils.utils import create_figure, create_placeholder_figure
 
+# In[2]: Initialize the Dash app
 # Initialize the Dash app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-# Create traffic simulation instance
-traffic_sim = HighwayTrafficSimulation()
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SANDSTONE])
 
 # Define the layout of the app
-app.layout = html.Div(
-    children=[
-        html.H1(children="Enhanced Highway Traffic System"),
-        dcc.Graph(
-            id="highway-graph",
-            config={"displayModeBar": False},  # Hide the toolbar
-        ),
-        html.Div(
-            children=[
-                # Number of cars input
-                html.Label("Number of Cars:"),
-                dcc.Input(
-                    id="num-cars-input",
-                    type="number",
-                    min=1,
-                    max=60,
-                    value=6,
-                    style={"marginRight": "10px"},
-                ),
-                # Start and Stop buttons
-                dbc.Button("Start", id="start-button", n_clicks=0, className="me-2"),
-                dbc.Button("Stop", id="stop-button", n_clicks=0),
-            ]
-        ),
-        dcc.Interval(id="interval-component", interval=1000, n_intervals=0),
-    ]
+app.layout = layout
+
+# In[3]: Define the callbacks
+@app.callback(
+    Output("interval-component", "disabled"),
+    Input("start-button", "n_clicks"),
+    Input("stop-button", "n_clicks"),
+    prevent_initial_call=True,
 )
+def control_simulation(start_clicks, stop_clicks):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return True  # Disabled by default
+
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if button_id == "start-button":
+        return False  # Enable interval when Start is clicked
+    else:
+        return True  # Disable interval when Stop is clicked
+
+
+@app.callback(
+    Output("collapse", "is_open"),
+    Input("collapse-button", "n_clicks"),
+    State("collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+# Initialize the traffic simulation
+traffic_sim = HighwayTrafficSimulation()
 
 
 @app.callback(
     Output("highway-graph", "figure"),
     Input("interval-component", "n_intervals"),
-    Input("num-cars-input", "value"),
     State("start-button", "n_clicks"),
-    State("stop-button", "n_clicks"),
+    State("simulation-type", "value"),
+    State("speed-slider", "value"),
+    State("lane-slider", "value"),
 )
-def update_traffic_system(n, num_cars, start_clicks, stop_clicks):
-    # Regenerate cars if the number changes
-    if (
-        not hasattr(update_traffic_system, "last_num_cars")
-        or update_traffic_system.last_num_cars != num_cars
-    ):
-        traffic_sim.generate_cars(num_cars)
-        update_traffic_system.last_num_cars = num_cars
+def update_traffic(n, start_button, simulation_type, speed_slider_value, lane_slider_value):
+    if start_button == 0:
+        return create_placeholder_figure()
+    # Make sure function executes only when necessary
+    if simulation_type == "simple":
+        traffic_sim.update_simple(speed_slider_value, lane_slider_value)
+        fig = create_figure(lane_slider_value, traffic_sim)
+        return fig
 
-    # Determine if the simulation is active based on button presses
-    simulation_active = start_clicks > stop_clicks
+    elif simulation_type == "individualistic":
+        traffic_sim.update_individualistic(speed_slider_value, lane_slider_value)
+        fig = create_figure(lane_slider_value, traffic_sim)
+        return fig
 
-    # If the simulation is not active, don't update the car positions
-    if not simulation_active:
-        return {}
+    elif simulation_type == "penguin":
+        traffic_sim.update_penguin(speed_slider_value, lane_slider_value)
+        fig = create_figure(lane_slider_value, traffic_sim)
+        return fig
 
-    # Update car positions
-    car_positions = traffic_sim.update_car_positions(n)
-
-    # Create a grid layout for the road (black squares for the road, green for sides)
-    road_data = []
-
-    # Create the black roadway grid (road in black)
-    for y in range(traffic_sim.road_width):
-        for x in range(traffic_sim.highway_length):
-            road_data.append(
-                go.Scatter(
-                    x=[x],
-                    y=[y],
-                    mode="markers",
-                    marker=dict(size=20, color="black", symbol="square"),
-                    showlegend=False,
-                )
-            )
-
-    # Create the green side squares (side of the road)
-    side_data = []
-    for y in [
-        -traffic_sim.side_width,
-        traffic_sim.road_width,
-    ]:  # Green side on both sides
-        for x in range(traffic_sim.highway_length):
-            side_data.append(
-                go.Scatter(
-                    x=[x],
-                    y=[y],
-                    mode="markers",
-                    marker=dict(size=20, color="green", symbol="square"),
-                    showlegend=False,
-                )
-            )
-
-    # Add cars as colored squares
-    car_data = []
-    for car in car_positions:
-        car_data.append(
-            go.Scatter(
-                x=[car.position],
-                y=[car.lane - 1],  # shift the car to match lane position
-                mode="markers",
-                marker=dict(size=20, color=car.color, symbol="square"),
-                name=f"Car (Lane {car.lane}, Speed {car.speed:.1f})",
-                showlegend=True,
-            )
-        )
-
-    # Set up the layout of the figure
-    figure = {
-        "data": road_data + side_data + car_data,
-        "layout": go.Layout(
-            title="Highway Traffic Simulation",
-            xaxis=dict(
-                range=[0, traffic_sim.highway_length], title="Highway Position (m)"
-            ),
-            yaxis=dict(
-                range=[-1, traffic_sim.road_width],
-                tickvals=[i for i in range(traffic_sim.road_width)],
-                ticktext=[f"Lane {i+1}" for i in range(traffic_sim.road_width)],
-                title="Lanes",
-            ),
-            showlegend=True,
-            plot_bgcolor="white",
-            xaxis_showgrid=False,
-            yaxis_showgrid=False,
-            height=500,
-        ),
-    }
-    return figure
+    # Handle other simulation types or return a default figure
+    fig = create_figure(lane_slider_value, traffic_sim)  # Ensure fig is always defined
+    return fig
 
 
-# Run the app
+# In[4]: Run the app
 if __name__ == "__main__":
-    app.run_server(debug=True, port=8050, host="0.0.0.0")
+    app.run_server(debug=True, port=8050)
