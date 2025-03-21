@@ -92,3 +92,4 @@ def update_traffic(n, start_button, simulation_type, speed_slider_value, lane_sl
 # In[4]: Run the app
 if __name__ == "__main__":
     app.run_server(debug=True, port=8050)
+    
