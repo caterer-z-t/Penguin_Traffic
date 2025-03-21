@@ -20,16 +20,16 @@ class Car:
         self.driver_type = driver_type  # normal, aggressive, cautious
 
         if driver_type == "normal":
-            self.safe_distance = 2
+            self.safe_distance = 1
             self.acceleration = 0.5
             self.deceleration = 1.0
         elif driver_type == "aggressive":
-            self.safe_distance = 1
+            self.safe_distance = 0.5
             self.acceleration = 1.0
             self.deceleration = 1.5
         elif driver_type == "cautious":
-            self.safe_distance = 3
-            self.acceleration = 0.3
+            self.safe_distance = 2
+            self.acceleration = 0.3 
             self.deceleration = 0.8
 
     def adjust_speed(self, distance, car_in_front_speed=None):
@@ -67,21 +67,21 @@ class HighwayTrafficSimulation:
 
     def _add_car(self, spawn_probability, lane_value):
         """Randomly adds a car based on the spawn probability."""
-        if random.random() < (
-            spawn_probability / 100
-        ):  # Convert slider value to probability
-            lane = random.randint(1, lane_value)
-            driver_type = random.choice(["normal", "aggressive", "cautious"])
+        for lane in range(1, lane_value + 1):
+            if random.random() < (
+                spawn_probability / 100 
+            ):  # Convert slider value to probability
+                driver_type = random.choice(["normal", "aggressive", "cautious"])
 
-            # Set speed based on driver type
-            if driver_type == "aggressive":
-                desired_speed = random.randint(5, 10)
-            elif driver_type == "normal":
-                desired_speed = random.randint(3, 8)
-            elif driver_type == "cautious":
-                desired_speed = random.randint(2, 6)
+                # Set speed based on driver type
+                if driver_type == "aggressive":
+                    desired_speed = random.randint(5, 10)
+                elif driver_type == "normal":
+                    desired_speed = random.randint(3, 8)
+                elif driver_type == "cautious":
+                    desired_speed = random.randint(2, 6)
 
-            self.cars.append(Car(lane, 0, desired_speed, driver_type=driver_type))
+                self.cars.append(Car(lane, 0, desired_speed, driver_type=driver_type))
 
     def _sort_cars_in_lane(self, lane_value):
         """Sorts cars in each lane by position."""
@@ -149,7 +149,7 @@ class HighwayTrafficSimulation:
                     rear_car_position_next_step = rear_car_position + rear_car_speed
 
                     # Check if the rear car will collide with the front car
-                    if rear_car_position_next_step >= front_car_position_next_step:   
+                    if rear_car_position_next_step >= (front_car_position_next_step - rear_car.safe_distance):   
 
                         # Adjust the rear car's speed to avoid collision
                         rear_car.speed = min(front_car_speed, rear_car_speed)

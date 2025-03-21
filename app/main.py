@@ -67,6 +67,20 @@ layout = html.Div(
                                                                         "justify-content": "center",
                                                                     },
                                                                 ),
+                                                                dbc.Col(
+                                                                    [
+                                                                        dbc.Button(
+                                                                            "Reset",
+                                                                            id="reset-button",
+                                                                            n_clicks=0,
+                                                                            className="me-2",
+                                                                        ),
+                                                                    ],
+                                                                    style={
+                                                                        "display": "flex",
+                                                                        "justify-content": "center",
+                                                                    },
+                                                                ),
                                                             ]
                                                         ),
                                                     ],
@@ -75,7 +89,9 @@ layout = html.Div(
                                                     [
                                                         html.Div(
                                                             "Additional Model Parameters:",
-                                                            style={"margin-bottom": "5px"},
+                                                            style={
+                                                                "margin-bottom": "5px"
+                                                            },
                                                         ),
                                                         dbc.Button(
                                                             "Additional Model Parameters",
@@ -130,28 +146,38 @@ layout = html.Div(
                                 ),
                                 dbc.Col(
                                     [
-                                        html.Div(
-                                            "Simulation Type:",
-                                            style={"margin-bottom": "5px"},
-                                        ),
-                                        dcc.Dropdown(
-                                            id="simulation-type",
-                                            options=[
-                                                {
-                                                    "label": "Simple",
-                                                    "value": "simple",
-                                                },
-                                                {
-                                                    "label": "Individualistic",
-                                                    "value": "individualistic",
-                                                },
-                                                {
-                                                    "label": "Penguin",
-                                                    "value": "penguin",
-                                                },
-                                            ],
-                                            value="simple",  # Ensure valid default
-                                            style={"width": "50%"},
+                                        dbc.Row(
+                                            [
+                                                dbc.Col(
+                                                    [
+                                                        html.Div(
+                                                            "Simulation Type:",
+                                                            style={
+                                                                "margin-bottom": "5px"
+                                                            },
+                                                        ),
+                                                        dcc.Dropdown(
+                                                            id="simulation-type",
+                                                            options=[
+                                                                {
+                                                                    "label": "Simple",
+                                                                    "value": "simple",
+                                                                },
+                                                                {
+                                                                    "label": "Individualistic",
+                                                                    "value": "individualistic",
+                                                                },
+                                                                {
+                                                                    "label": "Penguin",
+                                                                    "value": "penguin",
+                                                                },
+                                                            ],
+                                                            value="simple",  # Ensure valid default
+                                                            style={"width": "50%"},
+                                                        ),
+                                                    ]
+                                                ),
+                                            ]
                                         ),
                                     ],
                                     width=6,
