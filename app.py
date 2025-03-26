@@ -60,12 +60,14 @@ traffic_sim = HighwayTrafficSimulation()
 @app.callback(
     Output("highway-graph", "figure"),
     Input("interval-component", "n_intervals"),
+    Input("simulation-type", "value"),
     State("start-button", "n_clicks"),
-    State("simulation-type", "value"),
     State("speed-slider", "value"),
     State("lane-slider", "value"),
 )
-def update_traffic(n, start_button, simulation_type, speed_slider_value, lane_slider_value):
+def update_traffic(
+    n, simulation_type, start_button, speed_slider_value, lane_slider_value
+):
     if start_button == 0:
         return create_placeholder_figure()
     # Make sure function executes only when necessary
@@ -92,4 +94,3 @@ def update_traffic(n, start_button, simulation_type, speed_slider_value, lane_sl
 # In[4]: Run the app
 if __name__ == "__main__":
     app.run_server(debug=True, port=8050)
-    
