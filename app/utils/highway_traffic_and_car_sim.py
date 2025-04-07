@@ -331,7 +331,7 @@ class HighwayTrafficSimulation:
                         rear_car.speed = min(front_car_speed, rear_car_speed)
                         rear_car.position = front_car_position_next_step - huddle_distance
 
-                        rear_car.happiness += 1
+                        # rear_car.happiness += 1
 
                     else:
                         # Check if the rear car will collide with the front car
