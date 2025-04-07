@@ -35,6 +35,7 @@ layout = html.Div(
                                                                         "margin-bottom": "5px"
                                                                     },
                                                                 ),
+                                                                
                                                             ],
                                                         ),
                                                         dbc.Row(
@@ -233,6 +234,13 @@ layout = html.Div(
                 "background-color": "#f8f9fa",
                 "border-radius": "5px",
             },
+        ),
+        html.Div(
+            [
+                # html.Div("Speed of simulation:", style={"margin-bottom": "5px"}),
+                html.Br(),
+                dcc.Graph(id="highway-graph-statistics", config={"displayModeBar": False}),
+            ]
         ),
         dcc.Interval(
             id="interval-component", interval=FRAME_RATE, n_intervals=0, disabled=True

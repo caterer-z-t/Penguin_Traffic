@@ -1,6 +1,7 @@
 # In[1]:
 # highway_simulation.py
 import random
+import numpy as np
 
 # Highway parameters
 HIGHWAY_LENGTH = 100
@@ -18,40 +19,27 @@ class Car:
         self.id = random.randint(0, 10000000000000)
         self.color = f"rgb({random.randint(50,200)}, {random.randint(50,200)}, {random.randint(50,200)})"
         self.driver_type = driver_type  # normal, aggressive, cautious
+
+        # penguin information
         self.time_in_huddle = 0
         self.is_in_huddle = False
 
         if driver_type == "normal":
-            self.safe_distance = 1
+            self.safe_distance = 2
             self.acceleration = 0.5
             self.deceleration = 1.0
         elif driver_type == "aggressive":
-            self.safe_distance = 0.5
+            self.safe_distance = 1
             self.acceleration = 1.0
             self.deceleration = 1.5
         elif driver_type == "cautious":
-            self.safe_distance = 2
+            self.safe_distance = 3
             self.acceleration = 0.3 
             self.deceleration = 0.8
 
-    def adjust_speed(self, distance, car_in_front_speed=None):
-        # If no distance is provided, maintain current speed
-        if distance is None:
-            return
-
-        # If we're too close to the car in front
-        if distance <= self.safe_distance:
-            if car_in_front_speed is not None:
-                self.speed = min(self.speed, car_in_front_speed)
-            else:
-                self.speed -= self.deceleration
-        else:
-            # Accelerate if we have space
-            self.speed += self.acceleration
-
-        # Ensure speed doesn't go below 0
-        if self.speed < 0:
-            self.speed = 0
+        self.ideal_speed = speed
+        self.time = 0
+        self.happiness = 10
 
 # In[3]:
 class HighwayTrafficSimulation:
@@ -65,7 +53,12 @@ class HighwayTrafficSimulation:
             "avg_density": [],
             "cars_on_highway": [],
             "lane_distribution": [],
+            "avg_num_cars_per_lane": [],
+            "happiness_factor": [],
+            "avg_time_to_exit": [],
         }
+
+        self.cars_reached_destination = []
 
     def _add_car(self, spawn_probability, lane_value):
         """Randomly adds a car based on the spawn probability."""
@@ -97,27 +90,84 @@ class HighwayTrafficSimulation:
 
         return lanes
 
-    def _calculate_statistics(self):
-        """Calculates statistics for the simulation."""
+    def _calculate_statistics(self, lane_value_slider, type="none"):
+        """Calculates enhanced statistics for the simulation."""
         num_cars = len(self.cars)
         avg_speed = sum(car.speed for car in self.cars) / num_cars if num_cars > 0 else 0
         avg_density = num_cars / HIGHWAY_LENGTH
-        lane_distribution = [0, 0, 0]
+        lane_distribution = [0] * lane_value_slider
+
+        speeds = []
+        times_to_exit = []
+        num_exited_cars = 0
+        slow_car_threshold = 10  # Define a threshold for slow-moving cars
+        num_slow_cars = 0
+
         for car in self.cars:
-            if 1 <= car.lane <= 3:
+            if 1 <= car.lane <= lane_value_slider:
                 lane_distribution[car.lane - 1] += 1
+            speeds.append(car.speed)
+
+            # Track slow-moving cars
+            if car.speed < slow_car_threshold:
+                num_slow_cars += 1
+
+            # Track cars reaching destination
+            if car.position >= HIGHWAY_LENGTH:
+                num_exited_cars += 1
+                times_to_exit.append(
+                    self.time_elapsed - car.start_time
+                )  # Assuming car.start_time exists
+
+        # cars_reached_destination = []
+
+        lanes = self._sort_cars_in_lane(lane_value=lane_value_slider)
+
+        for lane in lanes:
+            for car in lanes[lane]:
+                car.time += 1
+
+                if car.position >= 90:
+                    # car reached destination
+                    self.cars_reached_destination.append(car.time)
+
+        # print(f"Cars reached destination: {self.cars_reached_destination}")
 
         self.statistics["time_elapsed"].append(self.time_elapsed)
         self.statistics["num_cars"].append(num_cars)
         self.statistics["avg_speed"].append(avg_speed)
         self.statistics["avg_density"].append(avg_density)
         self.statistics["lane_distribution"].append(lane_distribution)
+        self.statistics["avg_num_cars_per_lane"].append(
+            np.mean(lane_distribution)
+        )
+        self.statistics['happiness_factor'].append(
+            sum(car.happiness for car in self.cars) / num_cars if num_cars > 0 else 0
+        )
+        self.statistics["avg_time_to_exit"].append(
+            sum(self.cars_reached_destination) / len(self.cars_reached_destination) if self.cars_reached_destination else 0
+        )
+
+        # save the statistics to a csv file
+        with open(f"../../results/statistics_{type}.csv", "w") as f:
+            f.write("time_elapsed,num_cars,avg_speed,avg_density,lane_distribution,avg_num_cars_per_lane,happiness_factor,avg_time_to_exit\n")
+            for i in range(len(self.statistics["time_elapsed"])):
+                f.write(
+                    f"{self.statistics['time_elapsed'][i]},"
+                    f"{self.statistics['num_cars'][i]},"
+                    f"{self.statistics['avg_speed'][i]},"
+                    f"{self.statistics['avg_density'][i]},"
+                    f"{self.statistics['lane_distribution'][i]},"
+                    f"{self.statistics['avg_num_cars_per_lane'][i]},"
+                    f"{self.statistics['happiness_factor'][i]},"
+                    f"{self.statistics['avg_time_to_exit'][i]}\n"
+                )
 
     def _remove_cars(self):
         """Removes cars that have reached the end of the highway."""
         return [car for car in self.cars if car.position < HIGHWAY_LENGTH]
 
-    def _apres_simulation(self, spawn_rate, lane_value):
+    def _apres_simulation(self, spawn_rate, lane_value, type="none"):
         # Remove cars that have reached the end of the highway
         self.cars = self._remove_cars()
 
@@ -126,7 +176,7 @@ class HighwayTrafficSimulation:
 
         # Update statistics
         if self.cars:
-            self._calculate_statistics()
+            self._calculate_statistics(lane_value_slider=lane_value, type=type)
 
         self.time_elapsed += 1
         return self.cars
@@ -156,6 +206,8 @@ class HighwayTrafficSimulation:
                         # Adjust the rear car's speed to avoid collision
                         rear_car.speed = min(front_car_speed, rear_car_speed)
                         rear_car.position = front_car_position - rear_car.safe_distance
+
+                        rear_car.happiness -= 3
                     else:
                         # the cars will not collide so we can move them
                         rear_car.position += rear_car.speed
@@ -167,7 +219,7 @@ class HighwayTrafficSimulation:
                 car = lanes[lane][0]
                 car.position += car.speed
 
-        return self._apres_simulation(spawn_rate, lane_value)
+        return self._apres_simulation(spawn_rate, lane_value, type="simple")
 
     def update_individualistic(self, spawn_rate, lane_value):
         # Organize cars by lane
@@ -234,6 +286,8 @@ class HighwayTrafficSimulation:
                         rear_car.lane = best_lane
                         rear_car.position = rear_car_position + rear_car.speed
 
+                        rear_car.happiness -= 2
+
                     else:
                         # the cars will not collide so we can move them
                         rear_car.position += rear_car.speed
@@ -245,7 +299,7 @@ class HighwayTrafficSimulation:
                 car = lanes[lane][0]
                 car.position += car.speed
 
-        return self._apres_simulation(spawn_rate, lane_value)
+        return self._apres_simulation(spawn_rate, lane_value, type="individualistic")
 
     def update_penguin(self, spawn_rate, lane_value):
 
@@ -277,6 +331,8 @@ class HighwayTrafficSimulation:
                         rear_car.speed = min(front_car_speed, rear_car_speed)
                         rear_car.position = front_car_position_next_step - huddle_distance
 
+                        rear_car.happiness += 1
+
                     else:
                         # Check if the rear car will collide with the front car
                         if rear_car_position_next_step >= (
@@ -287,6 +343,8 @@ class HighwayTrafficSimulation:
                             rear_car.speed = min(front_car_speed, rear_car_speed)
                             rear_car.position = front_car_position - rear_car.safe_distance
                             rear_car.is_in_huddle = True
+
+                            rear_car.happiness -= 1
                         else:
                             # the cars will not collide so we can move them
                             rear_car.position += rear_car.speed
@@ -298,4 +356,4 @@ class HighwayTrafficSimulation:
                 car = lanes[lane][0]
                 car.position += car.speed
 
-        return self._apres_simulation(spawn_rate, lane_value)
+        return self._apres_simulation(spawn_rate, lane_value, type="penguin")

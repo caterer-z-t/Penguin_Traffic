@@ -1,8 +1,5 @@
 # In[1]: Imports
-import dash
-import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output, State
 import os
 import sys
 
@@ -78,19 +75,19 @@ def create_figure(lane_slider_value, traffic_sim):
     return fig
 
 
-def create_placeholder_figure():
+def create_placeholder_figure(filepath):
     fig = go.Figure()
 
     # Add an image using the local path (served via Dash assets)
     fig.add_layout_image(
         dict(
-            source="/assets/mana5280-DAQOskiNFtg-unsplash.jpg",  # Reference to local image
+            source=filepath,  # Reference to local image
             x=0.5,
             y=0.5,  # Center the image
             xref="paper",
             yref="paper",
-            sizex=1,
-            sizey=1,
+            sizex=1.5,
+            sizey=1.5,
             xanchor="center",
             yanchor="middle",
             layer="below",
@@ -101,10 +98,69 @@ def create_placeholder_figure():
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
     fig.update_layout(
-        title="Waiting for Simulation to Start...",
+        # title="Waiting for Simulation to Start...",
         showlegend=False,
         plot_bgcolor="white",
         margin=dict(l=0, r=0, t=40, b=0)
     )
 
     return fig
+
+
+def create_figure_statisticts(traffic_sim):
+    """Creates a figure displaying the traffic simulation statistics over time."""
+
+    stats = traffic_sim.statistics  # Extract statistics dictionary
+
+    if not stats["time_elapsed"]:  # Ensure there's data to plot
+        return go.Figure()  # Return an empty figure if no data exists
+
+    fig = go.Figure()
+
+    # Plot number of cars over time
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=stats["time_elapsed"],
+    #         y=stats["avg_cars_per_lane"],
+    #         mode="lines",
+    #         name="Number of Cars",
+    #     )
+    # )
+
+    # Plot average speed over time
+    fig.add_trace(
+        go.Scatter(
+            x=stats["time_elapsed"],
+            y=stats["avg_speed"],
+            mode="lines",
+            name="Average Speed",
+        )
+    )
+
+    # Plot density over time
+    fig.add_trace(
+        go.Scatter(
+            x=stats["time_elapsed"],
+            y=stats["avg_density"],
+            mode="lines",
+            name="Traffic Density",
+        )
+    )
+
+
+
+    # Set figure layout
+    fig.update_layout(
+        title="Traffic Simulation Statistics",
+        xaxis_title="Time Steps",
+        yaxis_title="Value",
+        legend_title="Metrics",
+        template="plotly_dark",
+    )
+
+    return fig
+
+def collapse_button(n, is_open):
+    if n:
+        return not is_open
+    return is_open
